@@ -20,6 +20,7 @@ namespace availability_groupname;
  * Unit tests for the group name condition.
  *
  * @package availability_groupname
+ * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class condition_test extends \advanced_testcase {
@@ -141,8 +142,14 @@ final class condition_test extends \advanced_testcase {
      * @param \core_availability\mock_info $info Availability info.
      * @param \core_availability\capability_checker $checker Capability checker.
      */
-    protected function assert_user_filter_matches(array $expected, condition $cond, bool $not, array $allusers,
-            \core_availability\mock_info $info, \core_availability\capability_checker $checker): void {
+    protected function assert_user_filter_matches(
+        array $expected,
+        condition $cond,
+        bool $not,
+        array $allusers,
+        \core_availability\mock_info $info,
+        \core_availability\capability_checker $checker
+    ): void {
         global $DB;
 
         sort($expected);

@@ -18,17 +18,17 @@
  * Privacy provider.
  *
  * @package availability_groupname
+ * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace availability_groupname\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy provider.
  *
  * @package availability_groupname
+ * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {

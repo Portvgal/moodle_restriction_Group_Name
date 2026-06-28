@@ -18,17 +18,17 @@
  * Condition main class.
  *
  * @package availability_groupname
+ * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace availability_groupname;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Condition main class.
  *
  * @package availability_groupname
+ * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class condition extends \core_availability\condition {
@@ -61,8 +61,10 @@ class condition extends \core_availability\condition {
      * @throws \coding_exception If invalid data structure.
      */
     public function __construct($structure) {
-        if (isset($structure->op) && is_string($structure->op) &&
-                in_array($structure->op, self::OPERATORS, true)) {
+        if (
+            isset($structure->op) && is_string($structure->op) &&
+                in_array($structure->op, self::OPERATORS, true)
+        ) {
             $this->operator = $structure->op;
         } else {
             throw new \coding_exception('Missing or invalid ->op for groupname condition');
@@ -78,6 +80,11 @@ class condition extends \core_availability\condition {
         }
     }
 
+    /**
+     * Saves the condition settings as an availability JSON object.
+     *
+     * @return \stdClass Availability JSON object.
+     */
     public function save() {
         return (object)[
             'type' => 'groupname',
@@ -86,6 +93,15 @@ class condition extends \core_availability\condition {
         ];
     }
 
+    /**
+     * Checks whether the condition allows access for a user.
+     *
+     * @param bool $not True if the condition is negated.
+     * @param \core_availability\info $info Availability info.
+     * @param bool $grabthelot True if additional data may be grabbed.
+     * @param int $userid User id.
+     * @return bool True if available.
+     */
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $DB;
 
@@ -100,8 +116,12 @@ class condition extends \core_availability\condition {
             } else {
                 [$insql, $params] = $DB->get_in_or_equal($groups, SQL_PARAMS_NAMED);
                 $params['courseid'] = $course->id;
-                $names = $DB->get_fieldset_select('groups', 'name',
-                    "courseid = :courseid AND id $insql", $params);
+                $names = $DB->get_fieldset_select(
+                    'groups',
+                    'name',
+                    "courseid = :courseid AND id $insql",
+                    $params
+                );
                 $allow = $this->matches_any_group_name($names);
             }
 
@@ -114,6 +134,14 @@ class condition extends \core_availability\condition {
         return $allow;
     }
 
+    /**
+     * Gets a human-readable description of the condition.
+     *
+     * @param bool $full True if full information should be included.
+     * @param bool $not True if the condition is negated.
+     * @param \core_availability\info $info Availability info.
+     * @return string Description.
+     */
     public function get_description($full, $not, \core_availability\info $info) {
         $opname = $this->operator;
         if ($not) {
@@ -134,16 +162,39 @@ class condition extends \core_availability\condition {
         return get_string('requires_' . $opname, 'availability_groupname', s($this->value));
     }
 
+    /**
+     * Gets a debug string for this condition.
+     *
+     * @return string Debug string.
+     */
     protected function get_debug_string() {
         return $this->operator . ' ' . $this->value;
     }
 
+    /**
+     * Returns whether this condition applies to user lists.
+     *
+     * @return bool True if this condition filters user lists.
+     */
     public function is_applied_to_user_lists() {
         return true;
     }
 
-    public function filter_user_list(array $users, $not, \core_availability\info $info,
-            \core_availability\capability_checker $checker) {
+    /**
+     * Filters a user list according to this condition.
+     *
+     * @param array $users Users to filter.
+     * @param bool $not True if the condition is negated.
+     * @param \core_availability\info $info Availability info.
+     * @param \core_availability\capability_checker $checker Capability checker.
+     * @return array Filtered users.
+     */
+    public function filter_user_list(
+        array $users,
+        $not,
+        \core_availability\info $info,
+        \core_availability\capability_checker $checker
+    ) {
         global $DB;
 
         if (!$users) {
@@ -182,9 +233,21 @@ class condition extends \core_availability\condition {
         return $result;
     }
 
+    /**
+     * Gets SQL that returns users matching this condition.
+     *
+     * @param bool $not True if the condition is negated.
+     * @param \core_availability\info $info Availability info.
+     * @param bool $onlyactive True to include only active enrolments.
+     * @return array SQL and parameters.
+     */
     public function get_user_list_sql($not, \core_availability\info $info, $onlyactive) {
         [$aagsql, $aagparams] = get_enrolled_sql(
-                $info->get_context(), 'moodle/site:accessallgroups', 0, $onlyactive);
+            $info->get_context(),
+            'moodle/site:accessallgroups',
+            0,
+            $onlyactive
+        );
         [$enrolsql, $enrolparams] = get_enrolled_sql($info->get_context(), '', 0, $onlyactive);
 
         $params = [];
@@ -271,18 +334,25 @@ class condition extends \core_availability\condition {
 
         switch ($this->operator) {
             case self::OP_EXACT:
-                $sql = $DB->sql_equal($field,
-                    self::unique_sql_parameter($params, $this->value), false);
+                $sql = $DB->sql_equal(
+                    $field,
+                    self::unique_sql_parameter($params, $this->value),
+                    false
+                );
                 break;
             case self::OP_CONTAINS:
-                $sql = $DB->sql_like($field,
+                $sql = $DB->sql_like(
+                    $field,
                     self::unique_sql_parameter($params, '%' . $DB->sql_like_escape($this->value) . '%'),
-                    false);
+                    false
+                );
                 break;
             case self::OP_STARTS_WITH:
-                $sql = $DB->sql_like($field,
+                $sql = $DB->sql_like(
+                    $field,
                     self::unique_sql_parameter($params, $DB->sql_like_escape($this->value) . '%'),
-                    false);
+                    false
+                );
                 break;
             default:
                 throw new \coding_exception('Unexpected operator: ' . $this->operator);
