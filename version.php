@@ -27,3 +27,4 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->version = 2026062800;
 $plugin->requires = 2024100700;
 $plugin->component = 'availability_groupname';
+$plugin->release = '1.0.0';
