@@ -54,6 +54,7 @@ jobs:
         run: >
           moodle-plugin-ci install
           --moodle=MOODLE_405_STABLE
+          --branch=${{ github.head_ref || github.ref_name }}
           --plugin="$GITHUB_WORKSPACE"
           --db-type=pgsql
           --db-host=127.0.0.1
@@ -159,6 +160,7 @@ jobs:
         run: >
           moodle-plugin-ci install
           --moodle=${{ matrix.moodle }}
+          --branch=${{ github.head_ref || github.ref_name }}
           --plugin="$GITHUB_WORKSPACE"
           --db-type=${{ matrix.database }}
           --db-host=${{ matrix.dbhost }}
