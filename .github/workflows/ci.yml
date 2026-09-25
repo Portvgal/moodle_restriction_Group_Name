@@ -36,6 +36,9 @@ jobs:
     steps:
       - name: Check out plugin
         uses: actions/checkout@v4
+        with:
+          path: plugin
+          persist-credentials: false
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -43,6 +46,7 @@ jobs:
           php-version: '8.3'
           extensions: curl, dom, exif, gd, iconv, intl, mbstring, mysqli, pgsql, simplexml, soap, sodium, tokenizer, xml, zip
           coverage: none
+          ini-values: max_input_vars=5000
 
       - name: Install Moodle Plugin CI
         run: |
@@ -54,7 +58,7 @@ jobs:
           moodle-plugin-ci install
           --moodle=MOODLE_405_STABLE
           --branch=${{ github.head_ref || github.ref_name }}
-          --plugin="$GITHUB_WORKSPACE"
+          --plugin=./plugin
           --db-type=pgsql
           --db-host=127.0.0.1
           --db-name=moodle
@@ -84,6 +88,7 @@ jobs:
 
       - name: Secret pattern scan
         run: |
+          cd plugin
           if git grep -n -E '(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|-----BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY-----|xox[baprs]-[0-9A-Za-z-]+|sk-[A-Za-z0-9]{20,})' -- .; then
             exit 1
           fi
@@ -139,6 +144,9 @@ jobs:
     steps:
       - name: Check out plugin
         uses: actions/checkout@v4
+        with:
+          path: plugin
+          persist-credentials: false
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -158,7 +166,7 @@ jobs:
           moodle-plugin-ci install
           --moodle=${{ matrix.moodle }}
           --branch=${{ github.head_ref || github.ref_name }}
-          --plugin="$GITHUB_WORKSPACE"
+          --plugin=./plugin
           --db-type=${{ matrix.database }}
           --db-host=${{ matrix.dbhost }}
           --db-name=${{ matrix.dbname }}
