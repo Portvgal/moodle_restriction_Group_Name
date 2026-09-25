@@ -23,7 +23,6 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: moodle
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
@@ -116,7 +115,6 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: moodle
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
@@ -129,7 +127,6 @@ jobs:
       mariadb:
         image: mariadb:11.4
         env:
-          MARIADB_DATABASE: moodle
           MARIADB_ROOT_PASSWORD: root
         ports:
           - 3306:3306
