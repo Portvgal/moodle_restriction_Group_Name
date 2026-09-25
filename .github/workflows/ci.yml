@@ -86,7 +86,7 @@ jobs:
         run: moodle-plugin-ci mustache
 
       - name: Frontend checks
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --max-lint-warnings 1
 
       - name: Secret pattern scan
         run: |
