@@ -3,6 +3,7 @@
  *
  * @module moodle-availability_groupname-form
  */
+/* eslint-disable camelcase */
 M.availability_groupname = M.availability_groupname || {};
 
 /**
