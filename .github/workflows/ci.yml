@@ -1,0 +1,190 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: moodle
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out plugin
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, dom, exif, gd, iconv, intl, mbstring, mysqli, pgsql, simplexml, soap, sodium, tokenizer, xml, zip
+          coverage: none
+
+      - name: Install Moodle Plugin CI
+        run: |
+          composer create-project --no-dev --prefer-dist --no-interaction moodlehq/moodle-plugin-ci ci ^4
+          echo "$GITHUB_WORKSPACE/ci/bin" >> "$GITHUB_PATH"
+
+      - name: Install Moodle test site
+        run: >
+          moodle-plugin-ci install
+          --moodle=MOODLE_405_STABLE
+          --plugin="$GITHUB_WORKSPACE"
+          --db-type=pgsql
+          --db-host=127.0.0.1
+          --db-name=moodle
+          --db-user=postgres
+          --db-pass=postgres
+
+      - name: PHP lint
+        run: moodle-plugin-ci phplint
+
+      - name: Plugin validation
+        run: moodle-plugin-ci validate
+
+      - name: Upgrade savepoints
+        run: moodle-plugin-ci savepoints
+
+      - name: Coding standards
+        run: moodle-plugin-ci phpcs --max-warnings 0
+
+      - name: PHPDoc
+        run: moodle-plugin-ci phpdoc --max-warnings 0
+
+      - name: Mustache lint
+        run: moodle-plugin-ci mustache
+
+      - name: Frontend checks
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: Secret pattern scan
+        run: |
+          if git grep -n -E '(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|-----BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY-----|xox[baprs]-[0-9A-Za-z-]+|sk-[A-Za-z0-9]{20,})' -- .; then
+            exit 1
+          fi
+
+  phpunit:
+    name: PHPUnit (${{ matrix.moodle }}, PHP ${{ matrix.php }}, ${{ matrix.database }})
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - moodle: MOODLE_405_STABLE
+            php: '8.3'
+            database: pgsql
+            dbhost: 127.0.0.1
+            dbname: moodle
+            dbuser: postgres
+            dbpass: postgres
+          - moodle: MOODLE_502_STABLE
+            php: '8.3'
+            database: mariadb
+            dbhost: 127.0.0.1
+            dbname: moodle
+            dbuser: root
+            dbpass: root
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: moodle
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: moodle
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mariadb-admin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out plugin
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, exif, gd, iconv, intl, mbstring, mysqli, pgsql, simplexml, soap, sodium, tokenizer, xml, zip
+          coverage: none
+          ini-values: max_input_vars=5000
+
+      - name: Install Moodle Plugin CI
+        run: |
+          composer create-project --no-dev --prefer-dist --no-interaction moodlehq/moodle-plugin-ci ci ^4
+          echo "$GITHUB_WORKSPACE/ci/bin" >> "$GITHUB_PATH"
+
+      - name: Install Moodle test site
+        run: >
+          moodle-plugin-ci install
+          --moodle=${{ matrix.moodle }}
+          --plugin="$GITHUB_WORKSPACE"
+          --db-type=${{ matrix.database }}
+          --db-host=${{ matrix.dbhost }}
+          --db-name=${{ matrix.dbname }}
+          --db-user=${{ matrix.dbuser }}
+          --db-pass=${{ matrix.dbpass }}
+
+      - name: PHPUnit
+        env:
+          MOODLE_PHPUNIT_DEBUG: true
+        run: moodle-plugin-ci phpunit --fail-on-warning
+
+  ci-required:
+    name: CI required
+    runs-on: ubuntu-24.04
+    needs:
+      - code-quality
+      - phpunit
+    if: always()
+
+    steps:
+      - name: Check required jobs
+        run: |
+          if [ '${{ needs.code-quality.result }}' != 'success' ]; then
+            exit 1
+          fi
+          if [ '${{ needs.phpunit.result }}' != 'success' ]; then
+            exit 1
+          fi
