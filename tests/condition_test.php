@@ -19,6 +19,7 @@ namespace availability_groupname;
 /**
  * Unit tests for the group name condition.
  *
+ * @covers \availability_groupname\condition
  * @package availability_groupname
  * @copyright 2026 Portvgal
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

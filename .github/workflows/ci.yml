@@ -52,12 +52,14 @@ jobs:
         run: |
           composer create-project --no-dev --prefer-dist --no-interaction moodlehq/moodle-plugin-ci ci ^4
           echo "$GITHUB_WORKSPACE/ci/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/ci/vendor/bin" >> "$GITHUB_PATH"
+          sudo locale-gen en_AU.UTF-8
 
       - name: Install Moodle test site
         run: >
           moodle-plugin-ci install
-          --moodle=MOODLE_405_STABLE
-          --branch=${{ github.head_ref || github.ref_name }}
+          --moodle=moodle
+          --branch=MOODLE_405_STABLE
           --plugin=./plugin
           --db-type=pgsql
           --db-host=127.0.0.1
@@ -160,12 +162,14 @@ jobs:
         run: |
           composer create-project --no-dev --prefer-dist --no-interaction moodlehq/moodle-plugin-ci ci ^4
           echo "$GITHUB_WORKSPACE/ci/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/ci/vendor/bin" >> "$GITHUB_PATH"
+          sudo locale-gen en_AU.UTF-8
 
       - name: Install Moodle test site
         run: >
           moodle-plugin-ci install
-          --moodle=${{ matrix.moodle }}
-          --branch=${{ github.head_ref || github.ref_name }}
+          --moodle=moodle
+          --branch=${{ matrix.moodle }}
           --plugin=./plugin
           --db-type=${{ matrix.database }}
           --db-host=${{ matrix.dbhost }}
